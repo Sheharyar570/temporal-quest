@@ -10,9 +10,10 @@ permissions:
   pages: write
   id-token: write
 
+# One deployment at a time; let a running deploy finish rather than cancel it half-way.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -22,9 +23,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      # The site is static; ship only what the browser loads (not examples/ or scripts/).
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp -r index.html favicon.svg css js _site/
+          touch _site/.nojekyll
+
       - uses: actions/configure-pages@v5
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
+
       - id: deployment
         uses: actions/deploy-pages@v4
